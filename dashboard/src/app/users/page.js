@@ -9,25 +9,42 @@ export default function UsersPage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editUser, setEditUser] = useState({});
 
-    // Fetch users from the backend
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch('http://localhost:5001/api/users');
+                const token = localStorage.getItem('jwtToken');
+                if (!token) {
+                    console.error('No token found. Redirecting to login...');
+                    router.push('/login'); 
+                    return;
+                }
+        
+                const response = await fetch('http://localhost:5001/api/users', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+        
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch users');
+                }
+        
                 const data = await response.json();
                 setUsers(data);
                 setFilteredUsers(data);
-                setLoading(false);
             } catch (error) {
                 console.error('Error fetching users:', error);
+                alert(error.message || 'Error fetching users. Please try again.');
+            } finally {
                 setLoading(false);
             }
         };
+        
 
         fetchUsers();
     }, []);
 
-    // Handle search
     useEffect(() => {
         let filtered = users;
 
@@ -41,7 +58,6 @@ export default function UsersPage() {
         setFilteredUsers(filtered);
     }, [search, users]);
 
-    // Edit user role
     const handleEditUser = async () => {
         try {
             const response = await fetch(`http://localhost:5001/api/users/${editUser.id}`, {
