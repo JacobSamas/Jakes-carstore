@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import AddCarModal from '../../components/AddCarModal';
+import EditCarModal from '../../components/EditCarModal';
 
 export default function CarsPage() {
     const [cars, setCars] = useState([]);
@@ -17,17 +19,29 @@ export default function CarsPage() {
         ownerId: 1,
     });
 
-    // Fetch cars from the backend
     useEffect(() => {
         const fetchCars = async () => {
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                alert('Please log in first.');
+                return;
+            }
+
             try {
-                const response = await fetch('http://localhost:5001/api/cars');
+                const response = await fetch('http://localhost:5001/api/cars', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch cars');
+                }
+
                 const data = await response.json();
                 setCars(data);
                 setFilteredCars(data);
-                setLoading(false);
             } catch (error) {
                 console.error('Error fetching cars:', error);
+            } finally {
                 setLoading(false);
             }
         };
@@ -35,7 +49,6 @@ export default function CarsPage() {
         fetchCars();
     }, []);
 
-    // Handle search and filters
     useEffect(() => {
         let filtered = cars;
 
@@ -48,73 +61,95 @@ export default function CarsPage() {
         setFilteredCars(filtered);
     }, [search, cars]);
 
-    // Add a new car
     const handleAddCar = async () => {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            alert('Please log in first.');
+            return;
+        }
+
         try {
             const response = await fetch('http://localhost:5001/api/cars/add', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
                 body: JSON.stringify(newCar),
             });
 
-            if (response.ok) {
-                const addedCar = await response.json();
-                setCars((prev) => [...prev, { ...newCar, id: addedCar.carId }]);
-                setFilteredCars((prev) => [...prev, { ...newCar, id: addedCar.carId }]);
-                setNewCar({ title: '', description: '', price: '', condition: 'new', ownerId: 1 });
-                setShowAddModal(false);
-                alert('Car added successfully!');
-            } else {
+            if (!response.ok) {
                 throw new Error('Failed to add car');
             }
+
+            const addedCar = await response.json();
+            setCars((prev) => [...prev, { ...newCar, id: addedCar.carId }]);
+            setFilteredCars((prev) => [...prev, { ...newCar, id: addedCar.carId }]);
+            setNewCar({ title: '', description: '', price: '', condition: 'new', ownerId: 1 });
+            setShowAddModal(false);
+            alert('Car added successfully!');
         } catch (error) {
             console.error('Error adding car:', error);
             alert('Error adding car');
         }
     };
 
-    // Edit a car
     const handleEditCar = async () => {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            alert('Please log in first.');
+            return;
+        }
+
         try {
             const response = await fetch(`http://localhost:5001/api/cars/${editCar.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
                 body: JSON.stringify(editCar),
             });
 
-            if (response.ok) {
-                const updatedCar = await response.json();
-                setCars((prev) =>
-                    prev.map((car) => (car.id === updatedCar.id ? updatedCar : car))
-                );
-                setFilteredCars((prev) =>
-                    prev.map((car) => (car.id === updatedCar.id ? updatedCar : car))
-                );
-                setShowEditModal(false);
-                alert('Car updated successfully!');
-            } else {
+            if (!response.ok) {
                 throw new Error('Failed to update car');
             }
+
+            const updatedCar = await response.json();
+            setCars((prev) =>
+                prev.map((car) => (car.id === updatedCar.id ? updatedCar : car))
+            );
+            setFilteredCars((prev) =>
+                prev.map((car) => (car.id === updatedCar.id ? updatedCar : car))
+            );
+            setShowEditModal(false);
+            alert('Car updated successfully!');
         } catch (error) {
             console.error('Error updating car:', error);
             alert('Error updating car');
         }
     };
 
-    // Delete a car
     const handleDeleteCar = async (id) => {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            alert('Please log in first.');
+            return;
+        }
+
         try {
             const response = await fetch(`http://localhost:5001/api/cars/${id}`, {
                 method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
             });
 
-            if (response.ok) {
-                setCars((prev) => prev.filter((car) => car.id !== id));
-                setFilteredCars((prev) => prev.filter((car) => car.id !== id));
-                alert('Car deleted successfully!');
-            } else {
+            if (!response.ok) {
                 throw new Error('Failed to delete car');
             }
+
+            setCars((prev) => prev.filter((car) => car.id !== id));
+            setFilteredCars((prev) => prev.filter((car) => car.id !== id));
+            alert('Car deleted successfully!');
         } catch (error) {
             console.error('Error deleting car:', error);
             alert('Error deleting car');
@@ -129,8 +164,14 @@ export default function CarsPage() {
         <div>
             <h1 className="text-2xl font-bold mb-4">Manage Cars</h1>
 
-            {/* Add Car Button */}
-            <div className="mb-6">
+            <div className="mb-6 flex justify-between">
+                <input
+                    type="text"
+                    placeholder="Search cars..."
+                    className="p-2 border rounded w-1/2"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
                 <button
                     className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                     onClick={() => setShowAddModal(true)}
@@ -139,139 +180,22 @@ export default function CarsPage() {
                 </button>
             </div>
 
-            {/* Add Car Modal */}
-            {showAddModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                    <div className="bg-white p-6 rounded shadow-lg w-96">
-                        <h2 className="text-lg font-bold mb-4">Add New Car</h2>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-1">Title</label>
-                            <input
-                                type="text"
-                                className="w-full p-2 border rounded"
-                                value={newCar.title}
-                                onChange={(e) => setNewCar({ ...newCar, title: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-1">Description</label>
-                            <textarea
-                                className="w-full p-2 border rounded"
-                                rows="3"
-                                value={newCar.description}
-                                onChange={(e) => setNewCar({ ...newCar, description: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="mb-4 grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Price</label>
-                                <input
-                                    type="number"
-                                    className="w-full p-2 border rounded"
-                                    value={newCar.price}
-                                    onChange={(e) => setNewCar({ ...newCar, price: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Condition</label>
-                                <select
-                                    className="w-full p-2 border rounded"
-                                    value={newCar.condition}
-                                    onChange={(e) => setNewCar({ ...newCar, condition: e.target.value })}
-                                >
-                                    <option value="new">New</option>
-                                    <option value="used">Used</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                                onClick={() => setShowAddModal(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                onClick={handleAddCar}
-                            >
-                                Add Car
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <AddCarModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onAddCar={handleAddCar}
+                newCar={newCar}
+                setNewCar={setNewCar}
+            />
 
-            {/* Edit Car Modal */}
-            {showEditModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                    <div className="bg-white p-6 rounded shadow-lg w-96">
-                        <h2 className="text-lg font-bold mb-4">Edit Car</h2>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-1">Title</label>
-                            <input
-                                type="text"
-                                className="w-full p-2 border rounded"
-                                value={editCar.title}
-                                onChange={(e) => setEditCar({ ...editCar, title: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-1">Description</label>
-                            <textarea
-                                className="w-full p-2 border rounded"
-                                rows="3"
-                                value={editCar.description}
-                                onChange={(e) => setEditCar({ ...editCar, description: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="mb-4 grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Price</label>
-                                <input
-                                    type="number"
-                                    className="w-full p-2 border rounded"
-                                    value={editCar.price}
-                                    onChange={(e) => setEditCar({ ...editCar, price: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Condition</label>
-                                <select
-                                    className="w-full p-2 border rounded"
-                                    value={editCar.condition}
-                                    onChange={(e) => setEditCar({ ...editCar, condition: e.target.value })}
-                                >
-                                    <option value="new">New</option>
-                                    <option value="used">Used</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                                onClick={() => setShowEditModal(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                onClick={handleEditCar}
-                            >
-                                Update Car
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <EditCarModal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                onEditCar={handleEditCar}
+                editCar={editCar}
+                setEditCar={setEditCar}
+            />
 
-            {/* Car Table */}
             <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
                 <thead className="bg-gray-100">
                     <tr>
