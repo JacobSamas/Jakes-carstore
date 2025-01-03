@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* globals.css */
+.bg-primary {
+  background-color: #1e90ff;
+}
+
+.text-primary {
+  color: #1e90ff;
+}
+
+.bg-secondary {
+  background-color: #ffa500;
+}
+
+.text-secondary {
+  color: #ffa500;
+}
