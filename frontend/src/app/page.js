@@ -1,53 +1,46 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { gsap } from 'gsap';
-import { motion } from 'framer-motion';
-import Features from '@/components/Features';
+import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { gsap } from "gsap";
+import { motion } from "framer-motion";
+import Features from "@/components/Features";
+import FeaturedCars from "@/components/FeaturedCars";
 
 export default function HomePage() {
   const quotes = [
-    'Find your dream car today at unbeatable prices.',
-    'Drive your dreams with Jake’s Carstore.',
-    'Quality cars, incredible prices, trusted sellers.',
-    'Unmatched deals on the car of your dreams.',
-    'The ultimate destination for car enthusiasts.',
+    "Find your dream car today at unbeatable prices.",
+    "Drive your dreams with Jake's Carstore.",
+    "Quality cars, incredible prices, trusted sellers.",
+    "Unmatched deals on the car of your dreams.",
+    "The ultimate destination for car enthusiasts.",
   ];
   const [currentQuote, setCurrentQuote] = useState(0);
 
   const heroRef = useRef();
 
   useEffect(() => {
-    // GSAP Scroll Animation
     if (heroRef.current) {
       gsap.fromTo(
         heroRef.current,
         { opacity: 0, y: 50 },
-        { opacity: 1, y: 0, duration: 1, ease: 'power2.out' }
+        { opacity: 1, y: 0, duration: 1, ease: "power2.out" }
       );
     }
 
-    // Quote Auto-Changer
     const interval = setInterval(() => {
       setCurrentQuote((prev) => (prev + 1) % quotes.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [quotes.length]);
 
   return (
     <div className="bg-gray-50 text-gray-800 min-h-screen">
-      {/* Hero Section */}
       <section
         ref={heroRef}
         className="hero py-20 bg-primary text-white relative overflow-hidden"
       >
-        {/* Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-70"
-          style={{ backgroundImage: "url('/hero-bg.jpg')" }}
-        ></div>
         <div className="absolute inset-0 bg-primary"></div>
 
         {/* Hero Content */}
@@ -90,8 +83,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
       <Features />
+      <FeaturedCars />
     </div>
   );
 }
