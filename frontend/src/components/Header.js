@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast, ToastContainer } from "react-toastify";
@@ -13,14 +13,28 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const handleLoginLogout = () => {
     if (isAuthenticated) {
-      localStorage.removeItem("jwtToken");
-      setIsAuthenticated(false);
-      toast.success("Logged out successfully!");
+      const confirmLogout = window.confirm(
+        "Are you sure you want to log out?"
+      );
+      if (confirmLogout) {
+        localStorage.removeItem("jwtToken");
+        setIsAuthenticated(false);
+        toast.success("Logged out successfully!");
+      }
     } else {
       toast.info("Redirecting to login...");
-      // Redirect to login page logic
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
     }
   };
 
