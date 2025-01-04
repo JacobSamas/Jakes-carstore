@@ -91,3 +91,19 @@ exports.searchCars = async (req, res) => {
         res.status(500).json({ message: 'Error searching cars', error: error.message });
     }
 };
+
+// Fetch a car by ID
+exports.getCarById = async (req, res) => {
+    const carId = req.params.id;
+  
+    try {
+      const [rows] = await db.query('SELECT * FROM cars WHERE id = ?', [carId]);
+      if (rows.length === 0) {
+        return res.status(404).json({ message: 'Car not found' });
+      }
+      res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error('Error fetching car by ID:', error);
+      res.status(500).json({ message: 'Error fetching car details' });
+    }
+  };
