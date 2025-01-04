@@ -3,10 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { FaCarAlt, FaTag, FaCalendarAlt } from 'react-icons/fa';
 
 export default function CarsPage() {
   const [cars, setCars] = useState([]);
   const [search, setSearch] = useState('');
+  const [condition, setCondition] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 100000]);
+  const [sort, setSort] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,9 +33,22 @@ export default function CarsPage() {
     fetchCars();
   }, []);
 
-  const filteredCars = cars.filter((car) =>
-    car.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredCars = cars
+    .filter((car) =>
+      car.title.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter((car) =>
+      condition ? car.condition === condition : true
+    )
+    .filter((car) =>
+      car.price >= priceRange[0] && car.price <= priceRange[1]
+    )
+    .sort((a, b) => {
+      if (sort === 'price-asc') return a.price - b.price;
+      if (sort === 'price-desc') return b.price - a.price;
+      if (sort === 'date-desc') return new Date(b.createdAt) - new Date(a.createdAt);
+      return 0;
+    });
 
   if (loading) {
     return <p className="text-center py-10">Loading cars...</p>;
@@ -46,15 +63,34 @@ export default function CarsPage() {
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Explore Cars</h2>
 
-        {/* Search Bar */}
-        <div className="mb-6">
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-6 mb-6">
           <input
             type="text"
             placeholder="Search cars by title..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full md:w-1/3 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
+          <select
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            className="w-full md:w-1/3 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">All Conditions</option>
+            <option value="new">New</option>
+            <option value="used">Used</option>
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="w-full md:w-1/3 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Sort By</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="date-desc">Newest</option>
+          </select>
         </div>
 
         {/* Cars Grid */}
@@ -73,16 +109,14 @@ export default function CarsPage() {
               />
               <div className="p-4">
                 <h3 className="text-lg font-bold text-gray-800">{car.title}</h3>
-                <p className="text-gray-600">${car.price.toLocaleString()}</p>
-                <span
-                  className={`inline-block px-3 py-1 text-sm font-semibold rounded ${
-                    car.condition === 'new'
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-yellow-100 text-yellow-600'
-                  }`}
-                >
+                <p className="text-gray-600 flex items-center">
+                  <FaTag className="mr-2 text-secondary" />
+                  ${car.price.toLocaleString()}
+                </p>
+                <p className="text-gray-600 flex items-center">
+                  <FaCarAlt className="mr-2 text-secondary" />
                   {car.condition.charAt(0).toUpperCase() + car.condition.slice(1)}
-                </span>
+                </p>
                 <Link href={`/cars/${car.id}`}>
                   <button className="mt-4 w-full px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90">
                     View Details
