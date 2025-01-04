@@ -47,6 +47,12 @@ export default function HamburgerMenu({
           <Link href="/sell" onClick={onClose} className="text-lg">
             Sell a Car
           </Link>
+          <Link href="/contact" onClick={onClose} className="text-lg">
+            Contact Us
+          </Link>
+          <Link href="/about" onClick={onClose} className="text-lg">
+            About Us
+          </Link>
           <button
             onClick={() => {
               handleLoginLogout();
